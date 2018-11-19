@@ -37,8 +37,19 @@ phina.define("MainScene", {
                 this.enemyGroup.addChild(Enemy(this.gridX.span(x * 2), this.gridY.span(y * 3), ENEMY_ASSETS[(x + y) % 5]));
             }
         }
+        this.missileGroup = DisplayElement().addChildTo(this);
     },
     update: function (app) {
+        // ミサイルと弾の当たり判定
+        if (this.player.bullet != null) {
+            this.missileGroup.children.some(missile => {
+                if (missile.hitTestElement(this.player.bullet)) {
+                    missile.flare("hit");
+                    this.player.bullet.flare("hit");
+                }
+            })
+        }
+        // 敵と弾の当たり判定
         if (this.player.bullet != null) {
             this.enemyGroup.children.some(enemy => {
                 if (enemy.hitTestElement(this.player.bullet)) {
@@ -50,6 +61,13 @@ phina.define("MainScene", {
                 return false;
             });
         }
+        // ミサイルとプレイヤーの当たり判定
+        this.missileGroup.children.some(missile => {
+            if (missile.hitTestElement(this.player)) {
+                missile.flare("hit");
+                this.player.flare("hit");
+            }
+        });
     }
 });
 
@@ -82,6 +100,10 @@ phina.define("Player", {
         if (this.bullet != null && this.bullet.isInvalid) {
             this.bullet = null;
         }
+    },
+
+    onhit: function () {
+        this.remove();
     }
 });
 
@@ -95,6 +117,40 @@ phina.define("Enemy", {
     },
     onhit: function () {
         this.remove();
+    }
+});
+
+phina.define("Missile", {
+    superClass: "PathShape",
+    init: function (x, y) {
+        this.superInit({
+            paths: [
+                {x: 0, y: 2},
+                {x: 3, y: 4},
+                {x: -3, y: 6},
+                {x: 3, y: 8},
+                {x: -3, y: 10},
+                {x: 3, y: 12},
+                {x: -3, y: 14},
+                {x: 0, y: 16},
+            ],
+            fill: null,
+            stroke: "orangered",
+            lineJoin: "miter",
+            strokeWidth: 1
+        });
+        this.x = x;
+        this.y = y;
+        this.SPEED = 5;
+    },
+    onhit: function () {
+        this.remove();
+    },
+    update: function () {
+        this.y += this.SPEED;
+        if (this.top > SCREEN_HEIGHT) {
+            this.flare("hit");
+        }
     }
 });
 
@@ -146,7 +202,6 @@ phina.define("EnemyGroup", {
                 right = Math.max(right, enemy.x / scene.gridX.unit());
                 left = Math.min(left, enemy.x / scene.gridX.unit());
             });
-
             this.time -= this.interval;
         }
 
