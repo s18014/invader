@@ -39,6 +39,7 @@ phina.define("MainScene", {
         }
         this.missileGroup = DisplayElement().addChildTo(this);
     },
+
     update: function (app) {
         // ミサイルと弾の当たり判定
         if (this.player.bullet != null) {
@@ -135,7 +136,7 @@ phina.define("Missile", {
                 {x: 0, y: 16},
             ],
             fill: null,
-            stroke: "orangered",
+            stroke: "yellow",
             lineJoin: "miter",
             strokeWidth: 1
         });
@@ -188,6 +189,7 @@ phina.define("EnemyGroup", {
         this.time = 0;
         this.interval = 200;
         this.direction = 1;
+        this.attackInterval = 50;
     },
 
     update: function (app) {
@@ -205,11 +207,31 @@ phina.define("EnemyGroup", {
             this.time -= this.interval;
         }
 
+        if (app.frame % this.attackInterval == 0) {
+            this.shot();
+        }
+
+
         if (this.direction > 0 && right >= 38
             || this.direction < 0 && left <= 2) {
             this.direction = -this.direction;
         }
     },
+    shot: function () {
+        var attackableEnemys = {};
+        var enemys = [];
+        var enemy = null;
+        this.children.forEach(enemy => {
+            if (enemy.x)
+            attackableEnemys[enemy.x] = enemy;
+        });
+
+        for (key in attackableEnemys) {
+            enemys.push(attackableEnemys[key]);
+        }
+        enemy = enemys[Math.floor(Math.random() * enemys.length)];
+        Missile(enemy.x, enemy.y).addChildTo(this.parent.missileGroup);
+    }
 });
 phina.main(() => {
     const app = GameApp({
