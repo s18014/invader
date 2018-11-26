@@ -37,6 +37,10 @@ phina.define("MainScene", {
                 this.enemyGroup.addChild(Enemy(this.gridX.span(x * 2), this.gridY.span(y * 3), ENEMY_ASSETS[(x + y) % 5]));
             }
         }
+
+        this.enemyGroup.children.some(e => {
+            console.log(e.x, e.y);
+        });
         this.missileGroup = DisplayElement().addChildTo(this);
     },
 
@@ -126,14 +130,12 @@ phina.define("Missile", {
     init: function (x, y) {
         this.superInit({
             paths: [
-                {x: 0, y: 2},
-                {x: 3, y: 4},
-                {x: -3, y: 6},
+                {x: 0, y: 4},
                 {x: 3, y: 8},
-                {x: -3, y: 10},
-                {x: 3, y: 12},
-                {x: -3, y: 14},
-                {x: 0, y: 16},
+                {x: -3, y: 12},
+                {x: 3, y: 16},
+                {x: -3, y: 20},
+                {x: 0, y: 24},
             ],
             fill: null,
             stroke: "yellow",
@@ -187,9 +189,9 @@ phina.define("EnemyGroup", {
     init: function () {
         this.superInit();
         this.time = 0;
-        this.interval = 200;
+        this.interval = 1000;
         this.direction = 1;
-        this.attackInterval = 50;
+        this.attackInterval = 40;
     },
 
     update: function (app) {
@@ -222,7 +224,6 @@ phina.define("EnemyGroup", {
         var enemys = [];
         var enemy = null;
         this.children.forEach(enemy => {
-            if (enemy.x)
             attackableEnemys[enemy.x] = enemy;
         });
 
