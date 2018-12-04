@@ -28,31 +28,30 @@ phina.define("MainScene", {
         this.gridY = Grid(SCREEN_HEIGHT, 40);
         this.backgroundColor = "black";
         this.time = 0;
-        this.enemyInterval = 2000;
 
         this.player = Player(this.gridX.center(), this.gridY.span(37)).addChildTo(this);
-        this.enemyGroup = EnemyGroup().addChildTo(this);
-        for (x=4; x<16; x++) {
-            for (y=1; y<8; y++) {
-                this.enemyGroup.addChild(Enemy(this.gridX.span(x * 2), this.gridY.span(y * 3), ENEMY_ASSETS[(x + y) % 5]));
-            }
-        }
-
-        this.enemyGroup.children.some(e => {
-            console.log(e.x, e.y);
-        });
+        this.enemyGroup = EnemyGroup(this, 7, 5, 2, 4).addChildTo(this);
+        this.enemyGroup.allMoveTo(this.gridX.center() - this.gridX.span(this.enemyGroup.column * this.enemyGroup.gapX) / 2, this.gridY.span(5));
         this.missileGroup = DisplayElement().addChildTo(this);
     },
 
     update: function (app) {
+        // 敵とプレイヤーの当たり判定
+        if (this.player != null) {
+            this.enemyGroup.children.some(enemy => {
+                if (enemy.hitTestElement(this.player) && enemy.parent != null) {
+                    this.player.flare('hit');
+                }
+            });
+        }
         // ミサイルと弾の当たり判定
-        if (this.player.bullet != null) {
+        if (this.player.bullet != null && this.player.parent != null) {
             this.missileGroup.children.some(missile => {
                 if (missile.hitTestElement(this.player.bullet)) {
                     missile.flare("hit");
                     this.player.bullet.flare("hit");
                 }
-            })
+            });
         }
         // 敵と弾の当たり判定
         if (this.player.bullet != null) {
@@ -60,15 +59,12 @@ phina.define("MainScene", {
                 if (enemy.hitTestElement(this.player.bullet)) {
                     this.player.bullet.flare('hit');
                     enemy.flare('hit');
-                    return true;
                 }
-
-                return false;
             });
         }
         // ミサイルとプレイヤーの当たり判定
         this.missileGroup.children.some(missile => {
-            if (missile.hitTestElement(this.player)) {
+            if (missile.hitTestElement(this.player) && this.player.parent != null) {
                 missile.flare("hit");
                 this.player.flare("hit");
             }
@@ -154,7 +150,7 @@ phina.define("Missile", {
         if (this.top > SCREEN_HEIGHT) {
             this.flare("hit");
         }
-    }
+    },
 });
 
 
@@ -186,19 +182,38 @@ phina.define("Bullet", {
 
 phina.define("EnemyGroup", {
     superClass: "DisplayElement",
-    init: function () {
+    init: function (scene, column, row, gapX, gapY) {
         this.superInit();
+        this.column = column;
+        this.row = row;
+        this.gapX = gapX;
+        this.gapY = gapY;
+        this.make(scene, column, row, gapX, gapY);
         this.time = 0;
+        this.beginInterval = 1000;
         this.interval = 1000;
+        this.maxAmountOfEnemy = this.children.length;
+        this.existRatio = 1;
         this.direction = 1;
-        this.attackInterval = 40;
+        this.attackInterval = 200;
+        this.isOnWall = false;
     },
 
     update: function (app) {
+        this.interval = this.children.length / this.maxAmountOfEnemy * this.beginInterval;
+        console.log(this.interval);
         this.time += app.deltaTime;
         const scene = this.parent;
         let right = 0;
         let left = scene.gridX.columns;
+
+
+        if (this.isOnWall && this.time / this.interval >= 0.5) {
+            this.children.forEach(enemy => {
+                enemy.moveBy(0, scene.gridY.unit() * 2);
+            });
+            this.isOnWall = false;
+        }
 
         if (this.time / this.interval >= 1) {
             this.children.forEach(enemy => {
@@ -217,8 +232,29 @@ phina.define("EnemyGroup", {
         if (this.direction > 0 && right >= 38
             || this.direction < 0 && left <= 2) {
             this.direction = -this.direction;
+            this.isOnWall = true;
+
         }
     },
+
+    make: function (scene, column, row, gapX, gapY) {
+        for (x=0; x<column; x++) {
+            for (y=0; y<row; y++) {
+                this.addChild(Enemy(scene.gridX.span(x * gapX), scene.gridY.span(y * gapY), ENEMY_ASSETS[(x) % 5]));
+            }
+        }
+
+    },
+
+    allMoveTo: function (gridX, gridY) {
+        var distX = this.x + gridX;
+        var distY = this.y + gridY;
+        console.log(distX);
+        this.children.forEach(enemy => {
+            enemy.moveBy(distX, distY);
+        });
+    },
+
     shot: function () {
         var attackableEnemys = {};
         var enemys = [];
