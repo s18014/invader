@@ -2,6 +2,7 @@ phina.globalize();
 
 const SCREEN_WIDTH = 960;
 const SCREEN_HEIGHT = 640;
+var SCORE = 0;
 const ASSETS = {
     "image": {
         "buro": "./assets/images/buropiyo.png",
@@ -26,8 +27,7 @@ phina.define("MainScene", {
         });
         this.gridX = Grid(SCREEN_WIDTH, 40);
         this.gridY = Grid(SCREEN_HEIGHT, 40);
-        this.backgroundColor = "black";
-        this.time = 0;
+        this.backgroundColor = "#111";
 
         this.player = Player(this.gridX.center(), this.gridY.span(37)).addChildTo(this);
         this.enemyGroup = EnemyGroup(this, 7, 5, 2, 4).addChildTo(this);
@@ -36,6 +36,11 @@ phina.define("MainScene", {
     },
 
     update: function (app) {
+        // ゲームクリア判定
+        if (this.enemyGroup.children.length <= 0) {
+            SCORE += 1500;
+            this.exit();
+        }
         // 敵とプレイヤーの当たり判定
         if (this.player != null) {
             this.enemyGroup.children.some(enemy => {
@@ -59,6 +64,7 @@ phina.define("MainScene", {
                 if (enemy.hitTestElement(this.player.bullet)) {
                     this.player.bullet.flare('hit');
                     enemy.flare('hit');
+                    SCORE += 100;
                 }
             });
         }
@@ -67,8 +73,22 @@ phina.define("MainScene", {
             if (missile.hitTestElement(this.player) && this.player.parent != null) {
                 missile.flare("hit");
                 this.player.flare("hit");
+                this.exit();
             }
         });
+    }
+});
+
+phina.define("ResultScene", {
+    superClass: "ResultScene",
+    init: function () {
+        this.superInit({
+            score: SCORE,
+            message: "This is JavaScript Class Work",
+            width: SCREEN_WIDTH,
+            height: SCREEN_HEIGHT
+        });
+        SCORE = 0;
     }
 });
 
@@ -201,7 +221,6 @@ phina.define("EnemyGroup", {
 
     update: function (app) {
         this.interval = this.children.length / this.maxAmountOfEnemy * this.beginInterval;
-        console.log(this.interval);
         this.time += app.deltaTime;
         const scene = this.parent;
         let right = 0;
@@ -249,7 +268,6 @@ phina.define("EnemyGroup", {
     allMoveTo: function (gridX, gridY) {
         var distX = this.x + gridX;
         var distY = this.y + gridY;
-        console.log(distX);
         this.children.forEach(enemy => {
             enemy.moveBy(distX, distY);
         });
