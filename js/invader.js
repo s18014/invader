@@ -46,6 +46,7 @@ phina.define("MainScene", {
             this.enemyGroup.children.some(enemy => {
                 if (enemy.hitTestElement(this.player) && enemy.parent != null) {
                     this.player.flare('hit');
+                    this.exit();
                 }
             });
         }
