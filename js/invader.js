@@ -65,6 +65,7 @@ phina.define("MainScene", {
                     this.player.bullet.flare('hit');
                     enemy.flare('hit');
                     SCORE += 100;
+                    return true;
                 }
             });
         }
@@ -160,7 +161,9 @@ phina.define("Missile", {
         });
         this.x = x;
         this.y = y;
-        this.SPEED = 5;
+        this.width = 6;
+        this.height = 24;
+        this.SPEED = 3;
     },
     onhit: function () {
         this.remove();
@@ -186,7 +189,7 @@ phina.define("Bullet", {
         this.x = x;
         this.y = y;
         this.isInvalid = false;
-        this.SPEED = 50;
+        this.SPEED = 5;
     },
 
     onhit: function () {
