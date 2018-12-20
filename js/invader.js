@@ -2,7 +2,8 @@ phina.globalize();
 
 const SCREEN_WIDTH = 960;
 const SCREEN_HEIGHT = 640;
-var SCORE = 0;
+let SCORE = 0;
+let GAME_STATUS = "";
 const ASSETS = {
     "image": {
         "buro": "./assets/images/buropiyo.png",
@@ -39,6 +40,7 @@ phina.define("MainScene", {
         // ゲームクリア判定
         if (this.enemyGroup.children.length <= 0) {
             SCORE += 1500;
+            GAME_STATUS = "GAME CLEAR"
             this.exit();
         }
         // 敵とプレイヤーの当たり判定
@@ -46,6 +48,7 @@ phina.define("MainScene", {
             this.enemyGroup.children.some(enemy => {
                 if (enemy.hitTestElement(this.player) && enemy.parent != null) {
                     this.player.flare('hit');
+                    GAME_STATUS = "GAME OVER"
                     this.exit();
                 }
             });
@@ -75,6 +78,7 @@ phina.define("MainScene", {
             if (missile.hitTestElement(this.player) && this.player.parent != null) {
                 missile.flare("hit");
                 this.player.flare("hit");
+                GAME_STATUS = "GAME OVER"
                 this.exit();
             }
         });
@@ -86,7 +90,7 @@ phina.define("ResultScene", {
     init: function () {
         this.superInit({
             score: SCORE,
-            message: "This is JavaScript Class Work",
+            message: GAME_STATUS,
             width: SCREEN_WIDTH,
             height: SCREEN_HEIGHT
         });
